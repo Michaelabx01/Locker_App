@@ -173,6 +173,7 @@ public class F_Ajustes extends Fragment {
         //Nombre de la carpeta
         File carpeta = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Password App");
 
+
         boolean carpetaCreada = false;
 
         if (!carpeta.exists()){
@@ -226,7 +227,7 @@ public class F_Ajustes extends Fragment {
 
     private void ImportarRegistros() {
         //Establecer la ruta
-        String Carpeta_Archivo = Environment.getExternalStorageDirectory()+ "/Documents/" + "/Password App/" + "Registros.csv";
+        String Carpeta_Archivo = new File(getActivity().getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Password App/Registros.csv").getAbsolutePath();
         File file = new File(Carpeta_Archivo);
         if (file.exists()){
             // Si el respaldo existe
@@ -257,9 +258,11 @@ public class F_Ajustes extends Fragment {
                             ""+tiempoA);
                 }
                 Toast.makeText(getActivity(), "Archivo CSV importado con éxito", Toast.LENGTH_SHORT).show();
-            }catch (Exception e){
-                Toast.makeText(getActivity(), ""+e.getMessage(), Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(getActivity(), "" + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
+
         }
         else {
             Toast.makeText(getActivity(), "No existe un respaldo", Toast.LENGTH_SHORT).show();
