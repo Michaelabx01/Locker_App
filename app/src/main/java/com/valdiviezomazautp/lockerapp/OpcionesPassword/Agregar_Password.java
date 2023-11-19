@@ -6,7 +6,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -46,6 +48,10 @@ public class Agregar_Password extends AppCompatActivity {
 
     ImageView Iv_imagen_eliminar;
 
+    private static final int CAMERA_PERMISSION_CODE = 100;
+    private static final int GALLERY_REQUEST_CODE = 101;
+    private static final int CAMERA_REQUEST_CODE = 102;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,15 +67,10 @@ public class Agregar_Password extends AppCompatActivity {
         Btn_Adjuntar_Imagen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                        Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
-                    TomarFotografia();
-                }else {
-                    SolicitudPermisoCamara.launch(Manifest.permission.CAMERA);
-                }
-
+                showImageSourceDialog();
             }
         });
+
     }
 
 
@@ -229,6 +230,81 @@ public class Agregar_Password extends AppCompatActivity {
         camaraAcivityResultLauncher.launch(intent);
 
     }
+
+    private void showImageSourceDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Seleccionar Fuente de Imagen");
+        String[] options = {"Cámara", "Galería"};
+        builder.setItems(options, (dialog, which) -> {
+            if (which == 0) {
+                // Option 0: Cámara
+                checkCameraPermission();
+            } else {
+                // Option 1: Galería
+                openGallery();
+            }
+        });
+
+        builder.create().show();
+    }
+
+
+    private void checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            takePhoto();
+        } else {
+            requestCameraPermission();
+        }
+    }
+
+    private void requestCameraPermission() {
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
+    }
+
+    private void takePhoto() {
+        // Your existing code for taking a photo
+        TomarFotografia();
+    }
+
+    private void openGallery() {
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        startActivityForResult(galleryIntent, GALLERY_REQUEST_CODE);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                takePhoto();
+            } else {
+                Toast.makeText(this, "Permiso de cámara denegado", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            if (requestCode == GALLERY_REQUEST_CODE) {
+                // Handle gallery result
+                if (data != null && data.getData() != null) {
+                    imagenUri = data.getData();
+                    Imagen.setImageURI(imagenUri);
+                }
+            } else if (requestCode == CAMERA_REQUEST_CODE) {
+                // Handle camera result
+                Imagen.setImageURI(imagenUri);
+            }
+        } else {
+            Toast.makeText(this, "Cancelado por el usuario", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
 
     private ActivityResultLauncher<Intent> camaraAcivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
